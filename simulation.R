@@ -1,33 +1,30 @@
 # Simulate basic Thomson Bonds 
-simulate_bonds <- function(N, X, expectation, K = 1){
+simulate_bonds <- function(N, X, P, K = 1){
 # Initialize data structures
-
 # Saved x_i scores
+X_num <- X
 X <- matrix(data = NA, nrow = X, ncol = 1)
 
 # Vector of contributions, e_i
 ## Drawn from std. norm. distribution
-E <- matrix(rnorm(N, mean = 0, sd = 1), ncol = 1) #### Should be 1 if std. norm, but book writes as sd_i so not sure if this is supposed to vary??
+E <- matrix(rnorm(N, mean = 0, sd = 1), ncol = 1)
 
 # Probability of selection
-#P <- matrix(data = NA, nrow = X_num) ## Currently this number for all bonds in a given item, but p can vary between items
-##### Need to do more reading on Expectations in probability theory before we can change this
-##### hard code so that P is the number of bonds to be selected for each item, with which bonds sampled being drawn from a binomial random variable from a dist with expectation 3 (i.e., average 3 bonds selected)
-expectation <- 3
 
-# Define function to select active bonds
-P <- function(x) {
-  # x is the current row
-  rbinom(n = length(x), size = 1, prob = expectation / N)
+## Define function to select active bonds
+prob <- function(x) {
+  # Value of 1 indicates active bond
+  rbinom(n = 1, size = 1, prob = P)
 }
 
-# Create indicator matrix
-A <- t(apply(A, 1, P))
-
+## Create indicator matrix
+A <- matrix(NA, nrow = X_num, ncol = N)
+A <- apply(A, c(1,2), prob)
 
 # Number of passes to be completed
 K = 1 # for standard Thomson model
 
+# Calculate item scores
 scores <- A %*% E
 colnames(scores) <- "scores"
 
@@ -41,7 +38,6 @@ for (i in 1:nrow(A)){
       
     }
   }
-  #colnames(bonds)[i] <- c(paste("bond", i, sep = "_"))
 }
 
 colnames(bonds) <- colnames(bonds, prefix = "bond_", do.NULL = FALSE)
@@ -54,12 +50,29 @@ return(bonds)
 # Function checks
 
 ## N of bonds
-N <- 10
+N <- 100
 ## N of items
-X <- 5
-## Avg. active bonds per item
-expectation <- 3
+X <- 12
+## P of bond being selected
+P <- .3
 ## Number of passes
 K = 1 # For standard Thomson model
+## how many individuals should be simulated
+size <- 500
 
-model <- simulate_bonds(N, X, expectation)
+set.seed(1234)
+# initialize matrix
+data <- matrix(data = NA, nrow = size, ncol = X)
+
+# simulate bonds and save item scores
+for (i in 1:size){
+  iter <- simulate_bonds(N, X, P)
+  data[i,] <- iter[,N+1]
+}
+
+# fix column names
+colnames(data) <- c(colnames(data, prefix = "item_score_", do.NULL = FALSE))
+
+
+# write txt for Jasp
+write.table(file='bonds.txt', data, row.names = FALSE, sep='\t')
