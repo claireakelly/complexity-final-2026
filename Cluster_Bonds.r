@@ -9,55 +9,61 @@ simulate_bonds <- function(N, X, P, K = 1){
   ## Drawn from std. norm. distribution
   E <- matrix(rnorm(N, mean = 0, sd = 1), ncol = 1)
 
-  # Probability of selection
-
-  ## Define function to select active bonds
-  prob <- function(x) {
-    # Value of 1 indicates active bond
-    rbinom(n = 1, size = 1, prob = P)
-  }
+  # Probability of bond selection
 
   #####CLUSTERING
 
-  ## 1/3 of bonds to clusters
+  ## Hard code for 3 approx. balanced clusters and N = 1000 bonds
+  ##### CAK: I have code from my thesis that I can dredge up and modify to allow this to not be hard coded, but I don't know if thats really necessarily rn
   bond_cluster <- c(
-    rep(1, 33),
-    rep(2, 33),
-    rep(3, 34)
+    rep(1, 333),
+    rep(2, 333),
+    rep(3, 334)
   )
-  ##each item to its associated "higher prob" cluster
-  item_group <- rep(1:3, each = 4) ##here hard coded for 12 items
+  
+  ## Each item to its associated "higher prob" cluster
+  item_group <- rep(1:3, each = 4) ## here hard coded for 12 items
 
   high_p <- .7
   low_p <- .3
 
-  #########
-
-  ## Create indicator matrix
+  # Initialize and populate probability and indicator matrix
+  cluster_prob <- matrix(NA, nrow = X_num, ncol = N)
   A <- matrix(NA, nrow = X_num, ncol = N)
-  ##A <- apply(A, c(1,2), prob)
-
-
-  # Number of passes to be completed
-  K = 1 # for standard Thomson model
-
-  # Calculate item scores-- not in the right place here
-  scores <- A %*% E
-  colnames(scores) <- "scores"
-
-
-  bonds <- matrix(NA, nrow = X_num, ncol = N)
+  
   for (i in 1:X_num){
     for(j in 1:N){
       if (item_group[i] == bond_cluster[j]) {
+        cluster_prob[i,j] <- high_p
         p <- high_p
       } else {
+        cluster_prob[i,j] <- low_p
         p <- low_p
       }
       A[i,j] <- rbinom(1, size = 1, prob = p)
     }
   }
 
+
+  # Number of passes to be completed
+  K = 1 # for standard Thomson model
+  
+  # Calculate item scores-- not in the right place here
+  scores <- A %*% E
+  colnames(scores) <- "scores"
+  
+  # Create matrix of actively contributed effects
+  bonds <- matrix(NA, nrow = X_num, ncol = N)
+  for (i in 1:nrow(A)){
+    for(j in 1:ncol(A)){
+      if (A[i,j] == 1) {
+        bonds[i,j] <- E[i]
+      } else {
+        bonds[i,j] <- 0
+        
+      }
+    }
+  }
   colnames(bonds) <- colnames(bonds, prefix = "bond_", do.NULL = FALSE)
   bonds <- cbind(bonds, scores)
 
@@ -69,7 +75,7 @@ simulate_bonds <- function(N, X, P, K = 1){
 # Function checks
 
 ## N of bonds
-N <- 100
+N <- 1000
 ## N of items
 X <- 12
 ## P of bond being selected
@@ -84,7 +90,7 @@ c <- 4
 set.seed(1234)
 # initialize matrix
 data <- matrix(data = NA, nrow = size, ncol = X)
-cd
+
 # simulate bonds and save item scores
 for (i in 1:size){
   iter <- simulate_bonds(N, X, P)
@@ -95,5 +101,7 @@ for (i in 1:size){
 colnames(data) <- c(colnames(data, prefix = "item_score_", do.NULL = FALSE))
 
 
+cor_data <- cor(data)
+
 # write txt for Jasp
-write.table(file='bonds.txt', data, row.names = FALSE, sep='\t')
+write.table(file='bonds_clustered.txt', data, row.names = FALSE, sep='\t')
