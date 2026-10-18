@@ -5,8 +5,8 @@ simulate_bonds <- function(N, X, P, K = 1){
 X_num <- X
 X <- matrix(data = NA, nrow = X, ncol = 1)
 
-# Vector of contributions, e_i
-## Drawn from std. norm. distribution
+# Vector of bond contributions, e_i
+## Drawn from norm. distribution (fix at sd = 1 for simplicity)
 E <- matrix(rnorm(N, mean = 0, sd = 1), ncol = 1)
 
 # Probability of selection
@@ -50,7 +50,7 @@ return(bonds)
 # Function checks
 
 ## N of bonds
-N <- 100
+N <- 1000
 ## N of items
 X <- 12
 ## P of bond being selected
@@ -72,6 +72,12 @@ for (i in 1:size){
 
 # fix column names
 colnames(data) <- c(colnames(data, prefix = "item_score_", do.NULL = FALSE))
+
+# correlation matrix is how we would expect
+## tetrad differences are close to zero (but not zero bc of sampling noise)
+## all correlations are positive, ie positive manifold
+
+cor_data <- cor(data)
 
 
 # write txt for Jasp
