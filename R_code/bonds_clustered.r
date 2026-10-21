@@ -103,5 +103,8 @@ colnames(data) <- c(colnames(data, prefix = "item_score_", do.NULL = FALSE))
 
 cor_data <- cor(data)
 
+write.csv(file = 'bonds_cor_clus.csv', cor_data, row.names = FALSE)
+
+
 # write txt for Jasp
 write.table(file='bonds_clustered.txt', data, row.names = FALSE, sep='\t')
